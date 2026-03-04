@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客观信息检索器</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      padding: 40px 16px;
+    }
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px 48px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a1a1a;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .search-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 15px;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #4a90e2; }
+    button {
+      padding: 10px 20px;
+      font-size: 15px;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    button:hover { background: #357abd; }
+    button:disabled { background: #a0bfe8; cursor: not-allowed; }
+    .lang-label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .lang-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .lang-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+    }
+    .lang-item input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+      accent-color: #4a90e2;
+    }
+
+    /* Result area */
+    #result-area {
+      margin-top: 32px;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #555;
+      font-size: 14px;
+      padding: 24px 0;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #d0d0d0;
+      border-top-color: #4a90e2;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .report-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .report-title {
+      font-size: 13px;
+      color: #888;
+    }
+    .report-query {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-top: 2px;
+    }
+
+    .report-body {
+      font-size: 15px;
+      line-height: 1.75;
+      color: #222;
+    }
+    .report-body h1, .report-body h2, .report-body h3 {
+      margin: 1.2em 0 0.4em;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+    .report-body h1 { font-size: 20px; }
+    .report-body h2 { font-size: 17px; }
+    .report-body h3 { font-size: 15px; }
+    .report-body p { margin: 0.6em 0; }
+    .report-body ul, .report-body ol {
+      padding-left: 1.5em;
+      margin: 0.6em 0;
+    }
+    .report-body li { margin: 0.3em 0; }
+    .report-body blockquote {
+      border-left: 3px solid #4a90e2;
+      margin: 0.8em 0;
+      padding: 4px 12px;
+      color: #555;
+      background: #f7f9fc;
+      border-radius: 0 4px 4px 0;
+    }
+    .report-body code {
+      background: #f2f2f2;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+    }
+    .report-body pre {
+      background: #f2f2f2;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 0.8em 0;
+    }
+    .report-body pre code { background: none; padding: 0; }
+    .report-body a { color: #4a90e2; }
+    .report-body hr {
+      border: none;
+      border-top: 1px solid #e8e8e8;
+      margin: 1.2em 0;
+    }
+
+    .error-box {
+      background: #fff5f5;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 16px 20px;
+      color: #b91c1c;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>客观信息检索器</h1>
+    <div class="search-row">
+      <input type="text" id="query" placeholder="输入搜索关键词..." autocomplete="off">
+      <button id="search-btn" onclick="handleSearch()">搜索</button>
+    </div>
+    <div class="lang-label">检索语言</div>
+    <div class="lang-group">
+      <label class="lang-item"><input type="checkbox" value="en" checked> EN</label>
+      <label class="lang-item"><input type="checkbox" value="zh" checked> ZH</label>
+      <label class="lang-item"><input type="checkbox" value="ja"> JA</label>
+      <label class="lang-item"><input type="checkbox" value="fr"> FR</label>
+      <label class="lang-item"><input type="checkbox" value="de"> DE</label>
+      <label class="lang-item"><input type="checkbox" value="ru"> RU</label>
+      <label class="lang-item"><input type="checkbox" value="ar"> AR</label>
+    </div>
+
+    <div id="result-area"></div>
+  </div>
+
+  <script>
+    const resultArea = document.getElementById('result-area');
+    const searchBtn = document.getElementById('search-btn');
+
+    function setLoading(on) {
+      searchBtn.disabled = on;
+      if (on) {
+        resultArea.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <span>正在检索并生成报告，请稍候…</span>
+          </div>`;
+      }
+    }
+
+    function showReport(query, markdown) {
+      const html = marked.parse(markdown);
+      resultArea.innerHTML = `
+        <div class="report-header">
+          <div>
+            <div class="report-title">检索报告</div>
+            <div class="report-query">${escapeHtml(query)}</div>
+          </div>
+        </div>
+        <div class="report-body">${html}</div>`;
+    }
+
+    function showError(msg) {
+      resultArea.innerHTML = `<div class="error-box">${escapeHtml(msg)}</div>`;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function handleSearch() {
+      const query = document.getElementById('query').value.trim();
+      const langs = Array.from(document.querySelectorAll('.lang-group input:checked')).map(el => el.value);
+      if (!query) { alert('请输入搜索关键词'); return; }
+      if (langs.length === 0) { alert('请至少选择一种语言'); return; }
+
+      setLoading(true);
+      try {
+        const res = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, langs }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showError(data.error || `请求失败 (${res.status})`);
+          return;
+        }
+        showReport(query, data.report);
+      } catch (err) {
+        showError('网络错误，请检查服务是否正常运行。');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    document.getElementById('query').addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleSearch();
+    });
+  </script>
+</body>
+</html>

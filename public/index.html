@@ -195,11 +195,11 @@
     <div class="lang-group">
       <label class="lang-item"><input type="checkbox" value="en" checked> EN</label>
       <label class="lang-item"><input type="checkbox" value="zh" checked> ZH</label>
-      <label class="lang-item"><input type="checkbox" value="ja"> JA</label>
       <label class="lang-item"><input type="checkbox" value="fr"> FR</label>
       <label class="lang-item"><input type="checkbox" value="de"> DE</label>
       <label class="lang-item"><input type="checkbox" value="ru"> RU</label>
-      <label class="lang-item"><input type="checkbox" value="ar"> AR</label>
+      <label class="lang-item"><input type="checkbox" value="es"> ES</label>
+      <label class="lang-item"><input type="checkbox" value="pt"> PT</label>
     </div>
 
     <div id="result-area"></div>
@@ -251,7 +251,7 @@
         const res = await fetch('/api/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, langs }),
+          body: JSON.stringify({ query, languages: langs }),
         });
         const data = await res.json();
         if (!res.ok) {

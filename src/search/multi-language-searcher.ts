@@ -18,15 +18,15 @@ interface BraveSearchResponse {
   };
 }
 
-// Brave Search API language/market codes per language
+// Brave Search API language/market codes per language (仅支持 Brave API 支持的语言)
 const BRAVE_LANG_PARAMS: Record<string, { country: string; search_lang: string; ui_lang: string }> = {
   en: { country: 'US', search_lang: 'en', ui_lang: 'en-US' },
   zh: { country: 'CN', search_lang: 'zh-hans', ui_lang: 'zh-CN' },
-  ja: { country: 'JP', search_lang: 'ja', ui_lang: 'ja-JP' },
   fr: { country: 'FR', search_lang: 'fr', ui_lang: 'fr-FR' },
   de: { country: 'DE', search_lang: 'de', ui_lang: 'de-DE' },
   ru: { country: 'RU', search_lang: 'ru', ui_lang: 'ru-RU' },
-  ar: { country: 'SA', search_lang: 'ar', ui_lang: 'ar-SA' },
+  es: { country: 'ES', search_lang: 'es', ui_lang: 'es-ES' },
+  pt: { country: 'BR', search_lang: 'pt', ui_lang: 'pt-BR' },
 };
 
 export class MultiLanguageSearcher {
